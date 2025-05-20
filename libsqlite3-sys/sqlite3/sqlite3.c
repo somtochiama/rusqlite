@@ -87252,15 +87252,16 @@ SQLITE_PRIVATE int sqlite3VdbeHalt(Vdbe *p){
       if( !p->readOnly || mrc!=SQLITE_INTERRUPT ){
         if( (mrc==SQLITE_NOMEM || mrc==SQLITE_FULL) && p->usesStmtJournal ){
           if mrc == SQLITE_FULL {
-
+            printf("sqlite3VdbeHalt: sp: roll back\n");
           }
-          printf("sqlite3VdbeHalt: sp: roll back\n");
           eStatementOp = SAVEPOINT_ROLLBACK;
         }else{
           /* We are forced to roll back the active transaction. Before doing
           ** so, abort any other statements this handle currently has active.
           */
-          printf("sqlite3VdbeHalt: tx: roll back\n");
+          if mrc == SQLITE_FULL {
+            printf("sqlite3VdbeHalt: tx: roll back\n");
+          }
           sqlite3RollbackAll(db, SQLITE_ABORT_ROLLBACK);
           sqlite3CloseSavepoints(db);
           db->autoCommit = 1;
@@ -101163,7 +101164,7 @@ abort_due_to_error:
     printf("ABORT-due-to-error (rc=%d): %s\n", rc, zTrace);
   }
 #endif
-  printf("sqlite3Vdbe: ABORT-due-to-error (rc=%d): %s\n", rc, zTrace);
+  printf("sqlite3VdbeABORT: ABORT-due-to-error (rc=%d): %s\n", rc, zTrace);
 
   if( p->zErrMsg==0 && rc!=SQLITE_IOERR_NOMEM ){
     sqlite3VdbeError(p, "%s", sqlite3ErrStr(rc));
