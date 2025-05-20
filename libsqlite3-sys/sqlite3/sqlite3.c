@@ -87232,6 +87232,7 @@ SQLITE_PRIVATE int sqlite3VdbeHalt(Vdbe *p){
                     || mrc==SQLITE_IOERR
                     || mrc==SQLITE_INTERRUPT
                     || mrc==SQLITE_FULL;
+      printf("sqlite3VdbeHalt: got a special error!\n");
     }else{
       mrc = isSpecialError = 0;
     }
@@ -87250,13 +87251,16 @@ SQLITE_PRIVATE int sqlite3VdbeHalt(Vdbe *p){
       */
       if( !p->readOnly || mrc!=SQLITE_INTERRUPT ){
         if( (mrc==SQLITE_NOMEM || mrc==SQLITE_FULL) && p->usesStmtJournal ){
-          printf("sqlite3VdbeHalt: rolling back savepoint\n");
+          if mrc == SQLITE_FULL {
+
+          }
+          printf("sqlite3VdbeHalt: sp: roll back\n");
           eStatementOp = SAVEPOINT_ROLLBACK;
         }else{
           /* We are forced to roll back the active transaction. Before doing
           ** so, abort any other statements this handle currently has active.
           */
-          // printf("sqlite3VdbeHalt: rolling back all transactions\n");
+          printf("sqlite3VdbeHalt: tx: roll back\n");
           sqlite3RollbackAll(db, SQLITE_ABORT_ROLLBACK);
           sqlite3CloseSavepoints(db);
           db->autoCommit = 1;
@@ -95965,7 +95969,6 @@ case OP_Savepoint: {
         if( (rc = sqlite3VdbeCheckFk(p, 1))!=SQLITE_OK ){
           goto vdbe_return;
         }
-        printf("sqlite3Vdbe: committing transaction savepoint\n");
         db->autoCommit = 1;
         if( sqlite3VdbeHalt(p)==SQLITE_BUSY ){
           p->pc = (int)(pOp - aOp);
@@ -95983,12 +95986,16 @@ case OP_Savepoint: {
         int isSchemaChange;
         iSavepoint = db->nSavepoint - iSavepoint - 1;
         if( p1==SAVEPOINT_ROLLBACK ){
+          printf("sqlite3VdbeSP: rolling back sp\n");
           isSchemaChange = (db->mDbFlags & DBFLAG_SchemaChange)!=0;
           for(ii=0; ii<db->nDb; ii++){
             rc = sqlite3BtreeTripAllCursors(db->aDb[ii].pBt,
                                        SQLITE_ABORT_ROLLBACK,
                                        isSchemaChange==0);
-            if( rc!=SQLITE_OK ) goto abort_due_to_error;
+            if( rc!=SQLITE_OK ) {
+              printf("sqlite3VdbeSP: abort during roll back sp\n");
+              goto abort_due_to_error;
+            }
           }
         }else{
           assert( p1==SAVEPOINT_RELEASE );
@@ -101156,6 +101163,8 @@ abort_due_to_error:
     printf("ABORT-due-to-error (rc=%d): %s\n", rc, zTrace);
   }
 #endif
+  printf("sqlite3Vdbe: ABORT-due-to-error (rc=%d): %s\n", rc, zTrace);
+
   if( p->zErrMsg==0 && rc!=SQLITE_IOERR_NOMEM ){
     sqlite3VdbeError(p, "%s", sqlite3ErrStr(rc));
   }
