@@ -87256,7 +87256,7 @@ SQLITE_PRIVATE int sqlite3VdbeHalt(Vdbe *p){
           /* We are forced to roll back the active transaction. Before doing
           ** so, abort any other statements this handle currently has active.
           */
-          printf("sqlite3VdbeHalt: rolling back all transactions\n");
+          // printf("sqlite3VdbeHalt: rolling back all transactions\n");
           sqlite3RollbackAll(db, SQLITE_ABORT_ROLLBACK);
           sqlite3CloseSavepoints(db);
           db->autoCommit = 1;
