@@ -324,8 +324,11 @@ impl Savepoint<'_> {
     /// rolled back, and can be rolled back again or committed.
     #[inline]
     pub fn rollback(&mut self) -> Result<()> {
-        self.conn
-            .execute_batch(&format!("ROLLBACK TO {}", self.name))
+        if let Err(e) = self.conn
+            .execute_batch(&format!("ROLLBACK TO {}", self.name)) {
+                println!("rusqlite: Error rolling back to savepoint: {}", e);
+            }
+        Ok(())
     }
 
     /// Consumes the savepoint, committing or rolling back according to the
@@ -347,7 +350,12 @@ impl Savepoint<'_> {
             DropBehavior::Commit => self
                 .commit_()
                 .or_else(|_| self.rollback().and_then(|()| self.commit_())),
-            DropBehavior::Rollback => self.rollback().and_then(|()| self.commit_()),
+            DropBehavior::Rollback => self.rollback().and_then(|()| {
+                self.commit_().map_err(|e| {
+                    println!("rusqlite: Error committing savepoint: {}", e);
+                    e
+                })
+            }),
             DropBehavior::Ignore => Ok(()),
             DropBehavior::Panic => panic!("Savepoint dropped unexpectedly."),
         }
