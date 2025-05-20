@@ -101164,7 +101164,7 @@ abort_due_to_error:
     printf("ABORT-due-to-error (rc=%d): %s\n", rc, zTrace);
   }
 #endif
-  printf("sqlite3VdbeABORT: ABORT-due-to-error (rc=%d): %s\n", rc, zTrace);
+  printf("sqlite3VdbeABORT: ABORT-due-to-error (rc=%d)", rc);
 
   if( p->zErrMsg==0 && rc!=SQLITE_IOERR_NOMEM ){
     sqlite3VdbeError(p, "%s", sqlite3ErrStr(rc));
