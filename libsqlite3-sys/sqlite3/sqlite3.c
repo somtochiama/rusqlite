@@ -37412,7 +37412,10 @@ static int kvvfsWriteJrnl(
   KVVfsFile *pFile = (KVVfsFile*)pProtoFile;
   sqlite3_int64 iEnd = iOfst+iAmt;
   SQLITE_KV_LOG(("xWrite('%s-journal',%d,%lld)\n", pFile->zClass, iAmt, iOfst));
-  if( iEnd>=0x10000000 ) return SQLITE_FULL;
+  if( iEnd>=0x10000000 ) {
+    printf("sqlite3Vde: io_full fts5AllocateSegid");
+    return SQLITE_FULL
+  };
   if( pFile->aJrnl==0 || pFile->nJrnl<iEnd ){
     char *aNew = sqlite3_realloc(pFile->aJrnl, iEnd);
     if( aNew==0 ){
@@ -41363,6 +41366,7 @@ static int unixWrite(
       return SQLITE_IOERR_WRITE;
     }else{
       storeLastErrno(pFile, 0); /* not a system error */
+      printf("sqlite3Vde: unixWrite");
       return SQLITE_FULL;
     }
   }
@@ -48702,6 +48706,7 @@ static int winRead(
   if( winSeekFile(pFile, offset) ){
     OSTRACE(("READ pid=%lu, pFile=%p, file=%p, rc=SQLITE_FULL\n",
              osGetCurrentProcessId(), pFile, pFile->h));
+    printf("sqlite3Vde: winRead");
     return SQLITE_FULL;
   }
   while( !osReadFile(pFile->h, pBuf, amt, &nRead, 0) ){
@@ -48829,6 +48834,7 @@ static int winWrite(
        || ( pFile->lastErrno==ERROR_DISK_FULL )){
       OSTRACE(("WRITE pid=%lu, pFile=%p, file=%p, rc=SQLITE_FULL\n",
                osGetCurrentProcessId(), pFile, pFile->h));
+      printf("sqlite3Vde: winWrite");
       return winLogError(SQLITE_FULL, pFile->lastErrno,
                          "winWrite1", pFile->zPath);
     }
@@ -52424,9 +52430,11 @@ static int memdbRead(
 static int memdbEnlarge(MemStore *p, sqlite3_int64 newSz){
   unsigned char *pNew;
   if( (p->mFlags & SQLITE_DESERIALIZE_RESIZEABLE)==0 || NEVER(p->nMmap>0) ){
+    printf("sqlite3Vde: mdmdbEnlarge");
     return SQLITE_FULL;
   }
   if( newSz>p->szMax ){
+    printf("sqlite3Vde: mdmdbEnlarge");
     return SQLITE_FULL;
   }
   newSz *= 2;
@@ -61944,6 +61952,7 @@ static int getPageNormal(
     assert( !isOpen(pPager->fd) || !MEMDB );
     if( !isOpen(pPager->fd) || pPager->dbSize<pgno || noContent ){
       if( pgno>pPager->mxPgno ){
+        printf("sqlite3Vde: getPageNormal");
         rc = SQLITE_FULL;
         if( pgno<=pPager->dbSize ){
           sqlite3PcacheRelease(pPg);
@@ -97720,6 +97729,7 @@ case OP_NewRowid: {           /* out2 */
       assert( (pMem->flags & MEM_Int)!=0 );  /* mem(P3) holds an integer */
       if( pMem->u.i==MAX_ROWID || pC->useRandomRowid ){
         rc = SQLITE_FULL;   /* IMP: R-17817-00630 */
+        printf("sqlite3Vde: NewRowId");
         goto abort_due_to_error;
       }
       if( v<pMem->u.i+1 ){
@@ -97746,6 +97756,7 @@ case OP_NewRowid: {           /* out2 */
       if( rc ) goto abort_due_to_error;
       if( res==0 ){
         rc = SQLITE_FULL;   /* IMP: R-38219-53002 */
+        printf("sqlite3Vde: NewRowId2");
         goto abort_due_to_error;
       }
       assert( v>0 );  /* EV: R-40812-03570 */
@@ -218722,7 +218733,10 @@ static int rbuUpdateTempSize(rbu_file *pFd, sqlite3_int64 nNew){
   pRbu->szTemp += nDiff;
   pFd->sz = nNew;
   assert( pRbu->szTemp>=0 );
-  if( pRbu->szTempLimit && pRbu->szTemp>pRbu->szTempLimit ) return SQLITE_FULL;
+  if( pRbu->szTempLimit && pRbu->szTemp>pRbu->szTempLimit ) {
+    printf("sqlite3Vde: rbuUpdateTempSize");
+    return SQLITE_FULL;
+  }
   return SQLITE_OK;
 }
 
@@ -240233,6 +240247,7 @@ static int fts5AllocateSegid(Fts5Index *p, Fts5Structure *pStruct){
 
   if( p->rc==SQLITE_OK ){
     if( pStruct->nSegment>=FTS5_MAX_SEGMENT ){
+      printf("sqlite3Vde: fts5AllocateSegid");
       p->rc = SQLITE_FULL;
     }else{
       /* FTS5_MAX_SEGMENT is currently defined as 2000. So the following
