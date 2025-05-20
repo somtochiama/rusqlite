@@ -96072,7 +96072,7 @@ case OP_AutoCommit: {
     if( iRollback ){
       assert( desiredAutoCommit==1 );
       sqlite3RollbackAll(db, SQLITE_ABORT_ROLLBACK);
-      printf("sqlite3Vdbe: rolling back all transactions\n");
+      // printf("sqlite3Vdbe: rolling back all transactions\n");
       db->autoCommit = 1;
     }else if( desiredAutoCommit && db->nVdbeWrite>0 ){
       /* If this instruction implements a COMMIT and other VMs are writing
