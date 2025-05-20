@@ -96035,7 +96035,6 @@ case OP_Savepoint: {
       }
 
       if( !isTransaction || p1==SAVEPOINT_ROLLBACK ){
-        printf("sqlite3Vdbe: rolling back tp\n");
         rc = sqlite3VtabSavepoint(db, p1, iSavepoint);
         if( rc!=SQLITE_OK ) goto abort_due_to_error;
       }
