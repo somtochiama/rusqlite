@@ -87327,7 +87327,7 @@ SQLITE_PRIVATE int sqlite3VdbeHalt(Vdbe *p){
       }else{
         sqlite3RollbackAll(db, SQLITE_ABORT_ROLLBACK);
         sqlite3CloseSavepoints(db);
-        printf("sqlite3VdbeHalt: resetting auto commit");
+        printf("sqlite3VdbeHalt: resetting auto commit\n");
         db->autoCommit = 1;
         p->nChange = 0;
       }
@@ -95965,7 +95965,7 @@ case OP_Savepoint: {
         if( (rc = sqlite3VdbeCheckFk(p, 1))!=SQLITE_OK ){
           goto vdbe_return;
         }
-        printf("sqlite3Vdbe: committing transaction savepoint");
+        printf("sqlite3Vdbe: committing transaction savepoint\n");
         db->autoCommit = 1;
         if( sqlite3VdbeHalt(p)==SQLITE_BUSY ){
           p->pc = (int)(pOp - aOp);
@@ -96035,7 +96035,7 @@ case OP_Savepoint: {
       }
 
       if( !isTransaction || p1==SAVEPOINT_ROLLBACK ){
-        printf("sqlite3Vdbe: rolling back tp");
+        printf("sqlite3Vdbe: rolling back tp\n");
         rc = sqlite3VtabSavepoint(db, p1, iSavepoint);
         if( rc!=SQLITE_OK ) goto abort_due_to_error;
       }
@@ -96073,7 +96073,7 @@ case OP_AutoCommit: {
     if( iRollback ){
       assert( desiredAutoCommit==1 );
       sqlite3RollbackAll(db, SQLITE_ABORT_ROLLBACK);
-      printf("sqlite3Vdbe: rolling back all transactions");
+      printf("sqlite3Vdbe: rolling back all transactions\n");
       db->autoCommit = 1;
     }else if( desiredAutoCommit && db->nVdbeWrite>0 ){
       /* If this instruction implements a COMMIT and other VMs are writing
